@@ -1,6 +1,6 @@
 use axum::http::Uri;
 
-const UNPROTECTED_PATHS: [&str; 1] = ["/user/login"];
+const UNPROTECTED_PATHS: [&str; 4] = ["/ping", "/tempApiGetOtp", "/tempApiGetToken", "/user/login"];
 
 const ADMIN_ONLY_PATHS: [&str; 1] = ["/admin/login"];
 

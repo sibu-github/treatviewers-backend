@@ -22,3 +22,12 @@ impl GenericResponse {
         Json(Self::new(success, message))
     }
 }
+
+/// response schema for Add Balance Init
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AddBalInitRes {
+    pub success: bool,
+    pub transaction_id: String,
+    pub app_upi_id: String,
+}

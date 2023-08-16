@@ -6,10 +6,25 @@ use utoipa::{
 #[derive(OpenApi)]
 #[openapi(
     paths(
+        crate::handlers::default_route::default_route_handler,
+        crate::handlers::ping::ping_handler,
+        crate::handlers::ping::temp_api_get_token,
+        crate::handlers::ping::temp_api_get_otp,
+        crate::handlers::wallet::add_bal::add_bal_init_handler,
 
     ),
     components(
         schemas(
+            crate::models::AddBalInitReq,
+
+
+            crate::models::GenericResponse,
+            crate::models::AddBalInitRes,
+
+            crate::models::Money,
+            crate::models::LoginScheme,
+            crate::models::User,
+            crate::models::AdminUser,
 
         )
     ),

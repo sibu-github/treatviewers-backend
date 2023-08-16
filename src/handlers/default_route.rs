@@ -9,7 +9,7 @@ use crate::models::GenericResponse;
     get,
     path = "/",
     responses(
-        (status = 200, description = "Get success response from server", body=GenericResponse)
+        (status = 200, description = "Get success response from server", body = GenericResponse)
     ),
     tag = "Debugging API"
 )]

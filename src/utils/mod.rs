@@ -29,16 +29,23 @@ impl Utility {
     pub fn is_admin_only_path(&self, uri: &Uri) -> bool {
         unprotected_route::is_admin_only_path(uri)
     }
+    pub fn get_epoch_ts(&self) -> u64 {
+        misc::get_epoch_ts()
+    }
     pub async fn get_seq_nxt_val(&self, seq_id: &str, db: &DbClient) -> anyhow::Result<u32> {
         misc::get_seq_nxt_val(seq_id, db).await
     }
     pub fn decode_token(&self, token: &str) -> Result<JwtClaims, AppError> {
         token::decode_token(token)
     }
-    pub fn generate_token(user_id: u32, name: Option<String>) -> anyhow::Result<String> {
+    pub fn generate_token(&self, user_id: u32, name: Option<String>) -> anyhow::Result<String> {
         token::generate_token(user_id, name)
     }
-    pub fn generate_token_admin(user_id: u32, name: Option<String>) -> anyhow::Result<String> {
+    pub fn generate_token_admin(
+        &self,
+        user_id: u32,
+        name: Option<String>,
+    ) -> anyhow::Result<String> {
         token::generate_token_admin(user_id, name)
     }
 }

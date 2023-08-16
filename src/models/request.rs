@@ -1,3 +1,4 @@
+use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use validator::Validate;
@@ -7,4 +8,16 @@ use validator::Validate;
 pub struct AddBalInitReq {
     #[validate(range(min = 1))]
     pub amount: u64,
+}
+
+/// request schema for Add Balance Init request
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AddBalEndReq {
+    #[validate(range(min = 1))]
+    pub amount: u64,
+    pub transaction_id: ObjectId,
+    pub is_successful: bool,
+    pub error_reason: Option<String>,
+    pub tracking_id: Option<String>,
 }

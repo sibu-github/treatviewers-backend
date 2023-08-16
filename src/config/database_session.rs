@@ -6,7 +6,7 @@ use mongodb::{
     },
     options::{
         FindOneAndUpdateOptions, FindOneOptions, FindOptions, InsertOneOptions, TransactionOptions,
-        UpdateOptions,
+        UpdateModifications, UpdateOptions,
     },
     ClientSession,
 };
@@ -63,16 +63,17 @@ impl DbSession {
             .await
     }
 
-    pub async fn find_one_and_update_with_session<T>(
+    pub async fn find_one_and_update_with_session<T, U>(
         &mut self,
         db: &str,
         coll: &str,
         filter: Document,
-        update: Document,
+        update: U,
         options: Option<FindOneAndUpdateOptions>,
     ) -> MongoResult<Option<T>>
     where
         T: DeserializeOwned + Send + Sync,
+        U: Into<UpdateModifications>,
     {
         let client = self.0.client();
         let collection = client.database(db).collection::<T>(coll);
@@ -201,16 +202,17 @@ mock! {
         where
             T: DeserializeOwned + Unpin + Send + Sync + 'static;
 
-        pub async fn find_one_and_update_with_session<T>(
+        pub async fn find_one_and_update_with_session<T, U>(
             &mut self,
             db: &str,
             coll: &str,
             filter: Document,
-            update: Document,
+            update: U,
             options: Option<FindOneAndUpdateOptions>,
         ) -> MongoResult<Option<T>>
         where
-            T: DeserializeOwned + Send + Sync + 'static;
+            T: DeserializeOwned + Send + Sync + 'static,
+            U: Into<UpdateModifications> + 'static;
 
         pub async fn insert_one_with_session<T>(
             &mut self,

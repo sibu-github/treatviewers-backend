@@ -16,5 +16,6 @@ pub fn wallet_routes() -> Router<Arc<AppState>, Body> {
     let wallet_extension = Arc::new(WalletExtension::new());
     Router::new()
         .route("/addBalanceInit", post(add_bal_init_handler))
+        .route("/addBalanceEnd", post(add_bal_end_handler))
         .layer(Extension(wallet_extension))
 }

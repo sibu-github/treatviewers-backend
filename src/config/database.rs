@@ -238,6 +238,8 @@ impl DbClient {
 #[cfg(test)]
 mock! {
     pub DbClient {
+        pub async fn new() -> Self;
+
         pub async fn find_one<T>(
             &self,
             db: &str,

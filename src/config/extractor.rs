@@ -2,11 +2,12 @@ use std::sync::Arc;
 
 use axum::{
     async_trait,
-    extract::FromRequest,
-    http::Request,
+    extract::{FromRequest, FromRequestParts, Query},
+    http::{request::Parts, Request},
     response::{IntoResponse, Response},
-    Json, RequestExt,
+    Json, RequestExt, RequestPartsExt,
 };
+use serde::de::DeserializeOwned;
 use validator::Validate;
 
 use crate::validators::ValidateExtra;
@@ -45,5 +46,41 @@ where
 
         // return the validated body
         Ok(Self(data))
+    }
+}
+
+pub struct ValidatedParams<T>(pub T);
+
+#[async_trait]
+impl<T> FromRequestParts<Arc<AppState>> for ValidatedParams<T>
+where
+    T: Validate + ValidateExtra + Sync + Send + 'static,
+    T: DeserializeOwned,
+    Query<T>: FromRequestParts<Arc<AppState>>,
+{
+    type Rejection = Response;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &Arc<AppState>,
+    ) -> Result<Self, Self::Rejection> {
+        let params = parts
+            .extract::<Query<T>>()
+            .await
+            .map(|Query(params)| params)
+            .map_err(|err| err.into_response())?;
+        params.validate().map_err(|err| {
+            let msg = format!("Error validating json query params: {err}");
+            tracing::debug!(msg);
+            AppError::BadRequest(msg).into_response()
+        })?;
+        params.validate_extra(state.clone()).await.map_err(|err| {
+            tracing::debug!(
+                "Error validating json query params with extra function: {:?}",
+                err
+            );
+            err.into_response()
+        })?;
+        Ok(Self(params))
     }
 }

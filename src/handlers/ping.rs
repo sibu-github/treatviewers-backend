@@ -10,10 +10,10 @@ use utoipa::IntoParams;
 use validator::Validate;
 
 use crate::{
-    config::{AppError, AppState},
+    config::{AppError, AppState, ValidatedParams},
     constants::*,
     models::*,
-    validators::validate_phonenumber,
+    validators::{validate_phonenumber, ValidateExtra},
 };
 
 /// Ping endpoint
@@ -75,6 +75,8 @@ pub struct OtpParams {
     admin_otp: Option<bool>,
 }
 
+impl ValidateExtra for OtpParams {}
+
 /// Temporary API to get OTP
 ///
 /// Returns the generated OTP for an user
@@ -89,22 +91,21 @@ pub struct OtpParams {
 )]
 pub async fn temp_api_get_otp(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<OtpParams>,
+    // TODO: swagger docs `Try It Out` functionality breaks without this line.
+    // Look for an alternative rather than putting this useless step
+    Query(_p): Query<OtpParams>,
+    ValidatedParams(params): ValidatedParams<OtpParams>,
 ) -> Result<Json<GenericResponse>, AppError> {
-    params
-        .validate()
-        .map_err(|e| AppError::BadRequest(e.to_string()))?;
     let filter = Some(doc! {"phone": &params.phone});
+    let db = state.db();
     let user_id = if params.admin_otp == Some(true) {
-        let user = state
-            .db()
+        let user = db
             .find_one::<AdminUser>(DB_NAME, COLL_ADMIN_USERS, filter, None)
             .await?
             .ok_or(AppError::NotFound("User not found".into()))?;
         user.id
     } else {
-        let user = state
-            .db()
+        let user = db
             .find_one::<User>(DB_NAME, COLL_USERS, filter, None)
             .await?
             .ok_or(AppError::NotFound("User not found".into()))?;

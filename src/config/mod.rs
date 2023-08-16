@@ -15,4 +15,5 @@ pub use app_state::AppState;
 pub use auth_middleware::auth_middleware;
 pub use error_handler::AppError;
 pub use extractor::ValidatedBody;
+pub use extractor::ValidatedParams;
 pub use logging::initialize_logging;

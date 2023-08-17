@@ -257,3 +257,50 @@ impl WalletHelpers {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use mockall::predicate::{eq, function};
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_get_user_balance() {
+        let user_id = 7;
+        let filter = doc! {"userId": user_id};
+        let wallet_helper = WalletHelpers::new();
+        let mut db = DbClient::default();
+        // wallet not found, default value returned
+        db.expect_find_one::<Wallet>()
+            .once()
+            .with(
+                eq(DB_NAME),
+                eq(COLL_WALLETS),
+                eq(Some(filter.clone())),
+                function(Option::is_none),
+            )
+            .returning(|_, _, _, _| Ok(None));
+        let result = wallet_helper.get_user_balance(&db, user_id).await;
+        let balance = result.unwrap();
+        assert_eq!(balance, Money::default());
+
+        // wallet found and actual found value returned
+        db.expect_find_one::<Wallet>()
+            .once()
+            .with(
+                eq(DB_NAME),
+                eq(COLL_WALLETS),
+                eq(Some(filter.clone())),
+                function(Option::is_none),
+            )
+            .returning(|_, _, _, _| {
+                let mut wallet = Wallet::default();
+                wallet.balance = Money::new(30, 15);
+                Ok(Some(wallet))
+            });
+        let result = wallet_helper.get_user_balance(&db, user_id).await;
+        let balance = result.unwrap();
+        assert_eq!(balance, Money::new(30, 15));
+    }
+}

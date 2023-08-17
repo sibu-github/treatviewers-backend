@@ -78,15 +78,15 @@ impl std::cmp::PartialEq for Money {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Wallet {
-    user_id: u32,
-    balance: Money,
-    created_ts: Option<u64>,
-    updated_ts: Option<u64>,
-    created_by: Option<u32>,
-    updated_by: Option<u32>,
+    pub user_id: u32,
+    pub balance: Money,
+    pub created_ts: Option<u64>,
+    pub updated_ts: Option<u64>,
+    pub created_by: Option<u32>,
+    pub updated_by: Option<u32>,
 }
 impl Wallet {
     pub fn balance(&self) -> Money {

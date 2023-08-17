@@ -45,10 +45,25 @@ where
     let status = res.status();
     let body = hyper::body::to_bytes(res.into_body()).await.unwrap();
     let body = std::str::from_utf8(&body).unwrap();
-    dbg!("response for {} -> {}", body);
+    dbg!("response for {} -> {}", uri, body);
     if let Some(expected_status) = expected_status {
         assert_eq!(status, expected_status);
     }
     let body: T = serde_json::from_str(body).unwrap();
     body
+}
+
+#[cfg(test)]
+pub async fn oneshot_req_plain(
+    app: Router,
+    body: Request<Body>,
+    expected_status: Option<StatusCode>,
+) -> String {
+    let uri = body.uri().to_string();
+    let res = app.oneshot(body).await.unwrap();
+    let status = res.status();
+    let body = hyper::body::to_bytes(res.into_body()).await.unwrap();
+    let body = std::str::from_utf8(&body).unwrap();
+    dbg!("response for {} -> {}", uri, body);
+    body.to_owned()
 }

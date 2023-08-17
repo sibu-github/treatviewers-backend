@@ -9,7 +9,7 @@ use axum::{
     TypedHeader,
 };
 
-use crate::config::AppError;
+use crate::config::{protected_routes::*, AppError};
 
 use super::AppState;
 
@@ -21,13 +21,13 @@ pub async fn auth_middleware<B>(
     next: Next<B>,
 ) -> Response {
     tracing::debug!("Running auth_middleware: path = {}", uri.path());
-    if state.utility().is_admin_only_path(&uri) || !state.utility().is_unprotected_path(&uri) {
+    if is_admin_only_path(&uri) || !is_unprotected_path(&uri) {
         let Some(bearer) = bearer else {
             return AppError::Auth("missing token".into()).into_response();
         };
         match state.utility().decode_token(bearer.token()) {
             Ok(claims) => {
-                if state.utility().is_admin_only_path(&uri) && !claims.is_admin {
+                if is_admin_only_path(&uri) && !claims.is_admin {
                     let err = "Unauthorized for ADMIN ONLY path";
                     return AppError::Auth(err.into()).into_response();
                     // TODO: implement extra check to validate admin user from database

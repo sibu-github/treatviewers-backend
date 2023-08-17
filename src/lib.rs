@@ -1,9 +1,13 @@
+#![allow(unused)]
+#![allow(dead_code)]
+
 use std::{net::SocketAddr, sync::Arc};
 
 mod config;
 mod constants;
 mod external_api;
 mod handlers;
+mod helpers;
 mod jobs;
 mod models;
 mod utils;
@@ -26,6 +30,5 @@ pub async fn start_web_server() {
     // start serving the app in the socket address
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
-        .await
-        .unwrap();
+        .await;
 }

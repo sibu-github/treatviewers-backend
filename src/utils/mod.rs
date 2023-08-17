@@ -1,4 +1,13 @@
 use axum::http::Uri;
+use mongodb::bson::{doc, oid::ObjectId, Document};
+use mongodb::error::Error as MongoError;
+use mongodb::error::Result as MongoResult;
+use mongodb::options::{FindOneAndUpdateOptions, ReturnDocument, UpdateModifications};
+
+use crate::{config::AppError, constants::*, models::*};
+
+#[cfg(test)]
+pub mod test_helper;
 
 mod misc;
 mod token;
@@ -6,28 +15,18 @@ mod unprotected_route;
 
 pub use misc::get_epoch_ts;
 
-#[cfg(test)]
-use mockall::automock;
-
-#[cfg(test)]
-use mockall_double::double;
-
-#[cfg_attr(test, double)]
+#[cfg_attr(test, mockall_double::double)]
 use crate::config::database::DbClient;
-use crate::{config::AppError, models::*};
+
+#[cfg_attr(test, mockall_double::double)]
+use crate::config::database_session::DbSession;
 
 pub struct Utility;
 
-#[cfg_attr(test, automock)]
+#[cfg_attr(test, mockall::automock)]
 impl Utility {
     pub fn new() -> Self {
         Self
-    }
-    pub fn is_unprotected_path(&self, uri: &Uri) -> bool {
-        unprotected_route::is_unprotected_path(uri)
-    }
-    pub fn is_admin_only_path(&self, uri: &Uri) -> bool {
-        unprotected_route::is_admin_only_path(uri)
     }
     pub fn get_epoch_ts(&self) -> u64 {
         misc::get_epoch_ts()

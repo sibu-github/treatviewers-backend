@@ -8,6 +8,7 @@ pub(crate) mod error_handler;
 pub(crate) mod extractor;
 pub(crate) mod jwt;
 pub(crate) mod logging;
+pub(crate) mod protected_routes;
 pub(crate) mod swagger;
 
 pub use app_routes::build_app_routes;

@@ -1,11 +1,10 @@
-use std::sync::Arc;
+use mongodb::{
+    bson::{doc, oid::ObjectId, Document},
+    error::{Error as MongoError, Result as MongoResult},
+    options::{FindOneAndUpdateOptions, ReturnDocument, UpdateModifications},
+};
 
-use mongodb::bson::{doc, oid::ObjectId, Document};
-use mongodb::error::Error as MongoError;
-use mongodb::error::Result as MongoResult;
-use mongodb::options::{FindOneAndUpdateOptions, ReturnDocument, UpdateModifications};
-
-use crate::{config::AppState, constants::*, models::*, utils::get_epoch_ts};
+use crate::{config::AppError, constants::*, models::*, utils::get_epoch_ts};
 
 #[cfg_attr(test, mockall_double::double)]
 use crate::config::database::DbClient;
@@ -13,14 +12,13 @@ use crate::config::database::DbClient;
 #[cfg_attr(test, mockall_double::double)]
 use crate::config::database_session::DbSession;
 
-pub struct WalletExtension;
+pub struct WalletHelpers;
 
 #[cfg_attr(test, mockall::automock)]
-impl WalletExtension {
+impl WalletHelpers {
     pub fn new() -> Self {
         Self
     }
-
     pub async fn get_user_balance(&self, db: &DbClient, user_id: u32) -> anyhow::Result<Money> {
         let filter = doc! {"userId": user_id};
         let wallet = db
@@ -52,16 +50,16 @@ impl WalletExtension {
         Ok(inserted_id.0)
     }
 
-    pub async fn updated_failed_transaction(
+    pub async fn update_failed_transaction(
         &self,
-        state: &Arc<AppState>,
+        db: &DbClient,
         user_id: u32,
         transaction_id: &ObjectId,
         error_reason: &Option<String>,
         tracking_id: &Option<String>,
     ) -> anyhow::Result<()> {
         let filter = doc! {"_id": transaction_id};
-        let ts = state.utility().get_epoch_ts() as i64;
+        let ts = get_epoch_ts() as i64;
         let update = doc! {
             "$set": {
                 "status": WalletTransactionStatus::Error.to_bson()?,
@@ -71,10 +69,53 @@ impl WalletExtension {
                 "updatedTs": ts
             }
         };
-        state
-            .db()
-            .update_one(DB_NAME, COLL_WALLET_TRANSACTIONS, filter, update, None)
+        db.update_one(DB_NAME, COLL_WALLET_TRANSACTIONS, filter, update, None)
             .await?;
+        Ok(())
+    }
+
+    pub async fn validate_add_bal_transaction(
+        &self,
+        db: &DbClient,
+        user_id: u32,
+        body: &AddBalEndReq,
+    ) -> Result<(), AppError> {
+        let filter = doc! {
+            "_id": &body.transaction_id,
+            "userId": user_id,
+            "status": WalletTransactionStatus::Pending.to_bson()?,
+            "transactionType": WalltetTransactionType::AddBalance.to_bson()?
+        };
+        let (transaction_result, balance_result) = tokio::join!(
+            self.get_wallet_transaction(db, filter),
+            self.get_user_balance(db, user_id)
+        );
+        let transaction =
+            transaction_result?.ok_or(AppError::NotFound("transaction not found".into()))?;
+        let user_balance = balance_result?;
+        let amount = Money::new(body.amount, 0);
+        if transaction.amount() != amount {
+            let err = AppError::BadRequest("amount do not match".into());
+            return Err(err);
+        }
+        if user_balance != transaction.balance_before() {
+            let msg = format!(
+                "user balance {} does not match with transaction balanceBefore {}",
+                user_balance,
+                transaction.balance_before()
+            );
+            let msg = Some(msg);
+            self.update_failed_transaction(
+                db,
+                user_id,
+                &body.transaction_id,
+                &body.error_reason,
+                &body.tracking_id,
+            )
+            .await?;
+            let err = AppError::BadRequest(msg.unwrap());
+            return Err(err);
+        }
         Ok(())
     }
 

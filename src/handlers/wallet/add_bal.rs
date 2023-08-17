@@ -46,28 +46,6 @@ pub async fn add_bal_init_handler(
     Ok(Json(res))
 }
 
-impl ValidateExtra for AddBalInitReq {}
-
-#[async_trait]
-impl ValidateExtra for AddBalEndReq {
-    async fn validate_extra(
-        &self,
-        state: Arc<AppState>,
-        user_id: Option<u32>,
-    ) -> Result<(), AppError> {
-        if !self.is_successful && self.error_reason.is_none() {
-            let err = "errorReason is required for failed transaction";
-            return Err(AppError::BadRequest(err.into()));
-        }
-        let user_id = user_id.unwrap_or_default();
-        let wallet_helpers = state.helpers().wallet_helpers();
-        wallet_helpers
-            .validate_add_bal_transaction(state.db(), user_id, self)
-            .await?;
-        Ok(())
-    }
-}
-
 /// Add balance finalize
 ///
 /// Finalize add balance transaction
@@ -162,6 +140,7 @@ mod tests {
 
     use crate::{
         config::build_app_routes,
+        helpers::Helpers,
         import_double,
         utils::{
             get_epoch_ts,
@@ -198,12 +177,12 @@ mod tests {
             .with(eq(token))
             .returning(move |_| Ok(JwtClaims::new(user_id, None, false, ts as usize)));
         state
-            .get_mut_helpers()
-            .mut_wallet_helpers()
+            .get_mut_validators()
             .expect_validate_add_bal_transaction()
             .once()
             .with(
                 function(|db: &DbClient| true),
+                function(|h: &Helpers| true),
                 eq(user_id),
                 function(move |body: &AddBalEndReq| {
                     body.amount == amount
@@ -213,7 +192,7 @@ mod tests {
                         && body.tracking_id.is_none()
                 }),
             )
-            .return_once(|_, _, _| Ok(()));
+            .return_once(|_, _, _, _| Ok(()));
         let state = Arc::new(state);
         let app = build_app_routes(state);
         let path = "/api/v1/wallet/addBalanceEnd";
@@ -241,12 +220,13 @@ mod tests {
             .once()
             .with(eq(token))
             .returning(move |_| Ok(JwtClaims::new(user_id, None, false, ts as usize)));
-        let wallet_helpers = state.get_mut_helpers().mut_wallet_helpers();
-        wallet_helpers
+        state
+            .get_mut_validators()
             .expect_validate_add_bal_transaction()
             .once()
             .with(
                 function(|db: &DbClient| true),
+                function(|h: &Helpers| true),
                 eq(user_id),
                 function(move |body: &AddBalEndReq| {
                     body.amount == amount
@@ -256,8 +236,10 @@ mod tests {
                         && body.tracking_id == Some(tracking_id.to_owned())
                 }),
             )
-            .return_once(|_, _, _| Ok(()));
-        wallet_helpers
+            .return_once(|_, _, _, _| Ok(()));
+        state
+            .get_mut_helpers()
+            .mut_wallet_helpers()
             .expect_update_failed_transaction()
             .once()
             .with(

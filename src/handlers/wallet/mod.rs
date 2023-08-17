@@ -5,6 +5,7 @@ use axum::{body::Body, routing::post, Router};
 use crate::config::AppState;
 
 pub(crate) mod add_bal;
+mod add_bal_end_req;
 
 use add_bal::*;
 

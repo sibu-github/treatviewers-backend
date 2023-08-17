@@ -9,6 +9,7 @@ use crate::{config::AppError, constants::*, models::*};
 #[cfg(test)]
 pub mod test_helper;
 
+mod impl_validate_extra;
 mod import_double;
 mod misc;
 mod token;

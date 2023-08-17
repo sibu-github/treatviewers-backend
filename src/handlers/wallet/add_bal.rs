@@ -162,14 +162,14 @@ mod tests {
 
     use crate::{
         config::build_app_routes,
+        import_double,
         utils::{
             get_epoch_ts,
             test_helper::{build_post_request, oneshot_request},
         },
     };
 
-    #[mockall_double::double]
-    use crate::config::database::DbClient;
+    import_double!(DbClient);
 
     use super::*;
 

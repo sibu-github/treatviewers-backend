@@ -1,5 +1,6 @@
-#[cfg_attr(test, mockall_double::double)]
-use self::wallet::WalletHelpers;
+use crate::import_double;
+
+import_double!(self::wallet::WalletHelpers);
 
 mod wallet;
 

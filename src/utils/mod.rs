@@ -9,6 +9,7 @@ use crate::{config::AppError, constants::*, models::*};
 #[cfg(test)]
 pub mod test_helper;
 
+mod import_double;
 mod misc;
 mod token;
 mod unprotected_route;

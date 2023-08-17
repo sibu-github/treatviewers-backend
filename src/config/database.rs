@@ -14,16 +14,9 @@ use mongodb::{
 };
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::constants::*;
+use crate::{constants::*, import_double};
 
-#[cfg(test)]
-use mockall_double::double;
-
-#[cfg_attr(test, double)]
-use super::database_session::DbSession;
-
-#[cfg(test)]
-use mockall::mock;
+import_double!(DbSession);
 
 #[derive(Debug)]
 pub struct InsertedId(pub String);
@@ -236,7 +229,7 @@ impl DbClient {
 }
 
 #[cfg(test)]
-mock! {
+mockall::mock! {
     pub DbClient {
         pub async fn new() -> Self;
 

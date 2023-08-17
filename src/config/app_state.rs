@@ -1,18 +1,9 @@
+use crate::import_double;
 use std::sync::Arc;
 
-#[cfg_attr(test, mockall_double::double)]
-use super::database::DbClient;
-
-#[cfg_attr(test, mockall_double::double)]
-use crate::external_api::ExternalApi;
-
-#[cfg_attr(test, mockall_double::double)]
-use crate::validators::Validators;
-
-#[cfg_attr(test, mockall_double::double)]
-use crate::utils::Utility;
-
 use crate::helpers::Helpers;
+
+import_double!(DbClient, ExternalApi, Validators, Utility);
 
 pub struct AppState {
     db: Arc<DbClient>,

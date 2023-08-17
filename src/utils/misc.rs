@@ -5,10 +5,9 @@ use mongodb::{
     options::{FindOneAndUpdateOptions, ReturnDocument},
 };
 
-use crate::constants::*;
+use crate::{constants::*, import_double};
 
-#[cfg_attr(test, mockall_double::double)]
-use crate::config::database::DbClient;
+import_double!(DbClient);
 
 pub fn get_epoch_ts() -> u64 {
     match SystemTime::now().duration_since(UNIX_EPOCH) {

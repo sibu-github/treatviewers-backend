@@ -4,13 +4,9 @@ use mongodb::{
     options::{FindOneAndUpdateOptions, ReturnDocument, UpdateModifications},
 };
 
-use crate::{config::AppError, constants::*, models::*, utils::get_epoch_ts};
+use crate::{config::AppError, constants::*, import_double, models::*, utils::get_epoch_ts};
 
-#[cfg_attr(test, mockall_double::double)]
-use crate::config::database::DbClient;
-
-#[cfg_attr(test, mockall_double::double)]
-use crate::config::database_session::DbSession;
+import_double!(DbClient, DbSession);
 
 pub struct WalletHelpers;
 
